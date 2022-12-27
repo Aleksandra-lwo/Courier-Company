@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sql import schemas, crud, main
+from sql import schemas, crud, main, models
 from sqlalchemy.orm import Session
 
 
@@ -15,6 +15,10 @@ class Authentication(BaseModel):
     password: str
 
 
+class Parameters(BaseModel):
+    membership: models.Membership
+
+
 @router.get("/", response_model=list[schemas.User])
 async def read_users(db: Session = Depends(main.get_db)):
     users = crud.get_users(db)
@@ -24,6 +28,12 @@ async def read_users(db: Session = Depends(main.get_db)):
 @router.get("/{user_id}", response_model=schemas.User)
 async def read_user_by_id(user_id: int, db: Session = Depends(main.get_db)):
     user = crud.get_user(db, user_id)
+    return user
+
+
+@router.patch("/{user_id}", response_model=schemas.User)
+async def change_membership(user_id: int, parameters: Parameters, db: Session = Depends(main.get_db)):
+    user = crud.change_user_membership(db, user_id, parameters.membership)
     return user
 
 
